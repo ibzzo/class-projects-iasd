@@ -72,6 +72,29 @@ Classification system for identifying different market regimes using advanced st
 
 ---
 
+### 6. 🏆 [GARDQ: GraphRAG for IT Incident Management](06-gardq-graphrag-system/) 
+**Master's Thesis Project with Orange Business Services**
+
+**Technologies:** Neo4j, Django, GPT-4, Knowledge Graphs, GraphRAG, Python
+
+An innovative Graph Retrieval-Augmented Generation (GraphRAG) system that revolutionizes IT incident management by combining Knowledge Graphs with Large Language Models. Developed during my 6-month internship at Orange Business Services.
+
+**Key Features:**
+- **Dual-level Knowledge Graph architecture** for intelligent ticket organization
+- **70% reduction** in resolution time for recurring incidents
+- **Multilingual semantic search** using Sentence-BERT embeddings
+- **Real-time solution generation** with source traceability
+- **50,000+ tickets** processed into actionable knowledge network
+
+**Business Impact:**
+- Automated solution suggestions for IT support teams
+- Knowledge capitalization from historical incidents
+- First-contact resolution improvement of 45%
+
+[📄 View Technical Presentation](06-gardq-graphrag-system/presentation_dev_team.tex) | [📖 Full Documentation](06-gardq-graphrag-system/README_EN.md)
+
+---
+
 ## Technical Skills
 
 ### Programming Languages
@@ -82,27 +105,33 @@ Classification system for identifying different market regimes using advanced st
 ### Machine Learning & Deep Learning
 - Classical ML: Random Forests, XGBoost, CatBoost, LightGBM
 - Deep Learning: CNNs, Transformers, YOLO
-- NLP: Transformers, Text Processing, Language Modeling
+- NLP: Transformers, Text Processing, Language Modeling, RAG/GraphRAG
 - Computer Vision: Object Detection, Image Classification
+- Knowledge Graphs: Neo4j, Cypher Query Language
 
 ### Big Data & Streaming
 - Apache Spark (Structured Streaming)
 - Apache Kafka
 - Real-time data processing
+- Graph Databases (Neo4j)
 
 ### Tools & Technologies
 - Docker & Containerization
 - Git & Version Control
 - Jupyter Notebooks
 - Cloud Platforms (AWS/GCP basics)
-- Data Visualization (Matplotlib, Seaborn, Plotly)
+- Data Visualization (Matplotlib, Seaborn, Plotly, D3.js)
+- Web Frameworks: Django, Flask
+- LLM APIs: OpenAI GPT-4, Embeddings
 
 ### Domains
 - Financial Markets Analysis
 - Medical Image Analysis
-- Natural Language Processing
+- Natural Language Processing & Information Retrieval
 - Real-time Analytics
 - Time Series Forecasting
+- IT Operations & Incident Management
+- Knowledge Graph Construction
 
 ## Contact
 
