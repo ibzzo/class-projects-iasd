@@ -1,0 +1,138 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Data files (too large for git)
+*.csv
+!sample_submission.csv
+data/train/
+data/test/
+*.pkl
+*.pickle
+
+# Model files
+*.pth
+*.pt
+*.h5
+*.hdf5
+*.onnx
+!best_model.pth  # Keep the best model
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Spark/Hadoop
+checkpoint*/
+spark-warehouse/
+derby.log
+metastore_db/
+
+# Docker
+*.pid
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# Large binary files
+*.zip
+*.tar.gz
+*.rar
+
+# Sensitive information
+*.env
+.env.*
+secrets/
+credentials/
+
+# Output files (keep only essential ones)
+submission_*.csv
+!submission.csv
+
+# Keep essential visualization files
+!visualizations/*.png
+
+# Catboost
+catboost_info/
+
+# Node modules (if any frontend components)
+node_modules/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
