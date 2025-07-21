@@ -1,0 +1,603 @@
+<!-- templates/incident_submission.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-black border border-orange-brand shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-bold font-helvetica text-white">
+                Soumettre un nouvel incident
+            </h3>
+            
+            <!-- Formulaire de soumission -->
+            <form id="incidentForm" class="mt-5 space-y-6">
+                {% csrf_token %}
+                <div>
+                    <label for="summary" class="block text-sm font-medium text-white">
+                        Résumé de l'incident
+                    </label>
+                    <input type="text" 
+                           name="summary" 
+                           id="summary"
+                           class="mt-1 focus:ring-orange-brand focus:border-orange-brand block w-full shadow-sm sm:text-sm border-orange-grey rounded-md bg-white text-black"
+                           required>
+                </div>
+
+                <div>
+                    <label for="description" class="block text-sm font-medium text-white">
+                        Description détaillée
+                    </label>
+                    <textarea id="description" 
+                              name="description" 
+                              rows="4"
+                              class="mt-1 focus:ring-orange-brand focus:border-orange-brand block w-full shadow-sm sm:text-sm border-orange-grey rounded-md bg-white text-black"
+                              required></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div>
+                        <label for="impact" class="block text-sm font-medium text-white">
+                            Impact
+                        </label>
+                        <select id="impact" 
+                                name="impact"
+                                class="mt-1 block w-full py-2 px-3 border border-orange-brand bg-white rounded-md shadow-sm focus:outline-none focus:ring-orange-brand focus:border-orange-brand sm:text-sm text-black">
+                            {% for level in impact_levels %}
+                            <option value="{{ level }}">{{ level }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-white">
+                            Catégorie
+                        </label>
+                        <select id="category" 
+                                name="category"
+                                class="mt-1 block w-full py-2 px-3 border border-orange-brand bg-white rounded-md shadow-sm focus:outline-none focus:ring-orange-brand focus:border-orange-brand sm:text-sm text-black">
+                            {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mt-6">
+                    <!-- Avertissement à côté du bouton -->
+                    <div class="text-xs text-orange-grey max-w-md flex items-center">
+                        <svg class="h-4 w-4 text-orange-brand flex-shrink-0 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                        <span>GARDQ peut faire des erreurs. Vérifiez bien la solution avant de l'appliquer.</span>
+                    </div>
+                    
+                    <button type="submit"
+                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-black bg-orange-brand hover:bg-orange-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-brand">
+                        Analyser l'incident
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section des suggestions (initialement cachée) -->
+    <div id="suggestionSection" class="mt-8 bg-black border border-orange-brand shadow sm:rounded-lg hidden">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-bold font-helvetica text-white">
+                Solutions suggérées par GARDQ
+            </h3>
+            
+            <!-- Solution recommandée pour le nouvel incident -->
+            <div class="mt-5 border-b border-gray-700 pb-5">
+                <h4 class="text-md font-medium text-white flex items-center">
+                    <svg class="mr-2 h-5 w-5 text-orange-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    Solution proposée pour votre incident
+                </h4>
+                <div class="mt-2 solution-card bg-black border border-orange-brand p-4 rounded-md fade-in">
+                    <div id="recommendedSolution" class="text-sm text-white structured-response"></div>
+                    
+                    <!-- Indicateurs de confiance et type de réponse -->
+                    <div class="mt-3 pt-3 border-t border-gray-700 flex flex-wrap gap-3">
+                        <div class="inline-flex items-center bg-black bg-opacity-50 px-3 py-1 rounded-md">
+                            <span class="text-xs text-orange-grey mr-1">Confiance:</span>
+                            <span id="confidenceScore" class="text-sm font-medium text-orange-brand"></span>
+                        </div>
+                        <div class="inline-flex items-center bg-black bg-opacity-50 px-3 py-1 rounded-md">
+                            <span class="text-xs text-orange-grey mr-1">Type:</span>
+                            <span id="answerType" class="text-sm font-medium text-orange-brand"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Source de la solution (ticket de référence) -->
+                    <div class="mt-3 pt-3 border-t border-gray-700">
+                        <div class="flex items-center">
+                            <svg class="h-4 w-4 text-orange-brand mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M6.672 1.911a1 1 0 10-1.932.518l.259.966a1 1 0 001.932-.518l-.26-.966zM2.429 4.74a1 1 0 10-.517 1.932l.966.259a1 1 0 00.517-1.932l-.966-.26zm8.814-.569a1 1 0 00-1.415-1.414l-.707.707a1 1 0 101.415 1.415l.707-.708zm-7.071 7.072l.707-.707A1 1 0 003.465 9.12l-.708.707a1 1 0 001.415 1.415zm3.2-5.171a1 1 0 00-1.3 1.3l4 10a1 1 0 001.823.075l1.38-2.759 3.018 3.02a1 1 0 001.414-1.415l-3.019-3.02 2.76-1.379a1 1 0 00-.076-1.822l-10-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-sm font-medium text-white">Basé sur le ticket de référence :</span>
+                            <span id="ticketReference" class="ml-2 px-2 py-0.5 bg-orange-brand bg-opacity-20 rounded font-mono text-orange-brand text-sm"></span>
+                            <a id="viewReferenceLink" href="#" class="ml-2 text-xs text-orange-brand hover:text-orange-light flex items-center">
+                                <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 9a2 2 0 114 0 2 2 0 01-4 0z"></path>
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a4 4 0 00-3.446 6.032l-2.261 2.26a1 1 0 101.414 1.415l2.261-2.261A4 4 0 1011 5z" clip-rule="evenodd"></path>
+                                </svg>
+                                Consulter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Autres incidents similaires dans le Knowledge Graph -->
+            <div class="mt-5">
+                <h4 class="text-md font-medium text-white flex items-center">
+                    <svg class="mr-2 h-5 w-5 text-orange-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                    </svg>
+                    Autres incidents similaires dans le Knowledge Graph
+                </h4>
+                <p class="text-xs text-orange-grey mt-1 mb-3">
+                    Les incidents suivants présentent des similitudes avec votre cas et peuvent offrir des solutions alternatives
+                </p>
+                <div id="similarCases" class="mt-2 space-y-4 fade-in">
+                    <!-- Les cas similaires seront injectés ici -->
+                </div>
+            </div>
+            
+            <!-- Visualisation du sous-graphe (lien) -->
+            <div class="mt-5 flex justify-center">
+                <a id="viewGraphLink" href="#" class="inline-flex items-center px-4 py-2 border border-orange-brand text-sm font-medium rounded-md text-orange-brand hover:bg-orange-brand hover:text-black transition-colors duration-200">
+                    <svg class="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 9a2 2 0 114 0 2 2 0 01-4 0z"></path>
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a4 4 0 00-3.446 6.032l-2.261 2.26a1 1 0 101.414 1.415l2.261-2.261A4 4 0 1011 5z" clip-rule="evenodd"></path>
+                    </svg>
+                    Visualiser le réseau de connaissances
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+/* Styles additionnels pour les réponses LLM */
+.solution-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.solution-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #FF7900, #F16E00);
+}
+
+.highlight-text {
+    background: linear-gradient(to right, rgba(255, 121, 0, 0.2), transparent);
+    padding: 2px 4px;
+    border-radius: 2px;
+}
+
+.ticket-reference {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Styles pour la réponse structurée */
+.structured-response h3 {
+    font-weight: 600;
+    color: #FF7900;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.structured-response .section {
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-left: 3px solid #FF7900;
+}
+
+.structured-response .section-title {
+    font-weight: 600;
+    color: #FF7900;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+.structured-response .ticket-id {
+    font-family: 'Courier New', monospace;
+    color: #FF7900;
+    font-weight: 600;
+}
+
+.structured-response .steps {
+    margin-left: 16px;
+    list-style-type: decimal;
+}
+
+.structured-response .steps li {
+    margin-bottom: 6px;
+}
+
+.structured-response .warning {
+    background-color: rgba(255, 121, 0, 0.1);
+    border-left: 3px solid #FF7900;
+    padding: 8px 12px;
+    margin-top: 12px;
+    border-radius: 0 4px 4px 0;
+}
+
+.structured-response .code {
+    font-family: 'Courier New', monospace;
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 2px;
+}
+</style>
+
+<script>
+document.getElementById('incidentForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Affichage du loader
+    const submitButton = this.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-orange-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Analyse en cours...
+    `;
+
+    try {
+        const response = await fetch('/analyze-incident/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken 
+            },
+            body: JSON.stringify({
+                summary: document.getElementById('summary').value,
+                description: document.getElementById('description').value,
+                impact: document.getElementById('impact').value,
+                category: document.getElementById('category').value
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            displaySuggestions(data.suggestions);
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        alert('Une erreur est survenue lors de l\'analyse: ' + error.message);
+    } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Analyser l\'incident';
+    }
+});
+
+function displaySuggestions(suggestions) {
+    // Affichage de la section des suggestions
+    document.getElementById('suggestionSection').classList.remove('hidden');
+    
+    // Récupération des données
+    const recommendedSolution = suggestions.recommended_solution;
+    const structuredContent = suggestions.structured_content || { sections: [] };
+    const ticketId = suggestions.ticket_id || 'N/A';
+    const confidenceScore = `${suggestions.confidence_score}%`;
+    const answerType = suggestions.answer_type || 'SOLUTION';
+    
+    // Mise à jour de la solution recommandée
+    // Rendu du contenu structuré
+    const structuredHtml = renderStructuredContent(structuredContent, recommendedSolution, ticketId);
+    document.getElementById('recommendedSolution').innerHTML = structuredHtml;
+    
+    // Mise à jour des métadonnées de la solution
+    document.getElementById('ticketReference').textContent = ticketId;
+    document.getElementById('confidenceScore').textContent = confidenceScore;
+    document.getElementById('answerType').textContent = answerType;
+    
+    // Mise à jour des liens
+    document.getElementById('viewReferenceLink').href = `/kg-visualization/?ticket_id=${ticketId}`;
+    document.getElementById('viewGraphLink').href = `/kg-visualization/?ticket_id=${ticketId}`;
+    
+    // Mise à jour des cas similaires avec une meilleure présentation
+    const similarCasesContainer = document.getElementById('similarCases');
+    similarCasesContainer.innerHTML = suggestions.similar_cases.map(case_ => `
+        <div class="border border-orange-brand rounded-lg p-4 hover:bg-black hover:bg-opacity-40 transition-all duration-300">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-2">
+                        <svg class="h-4 w-4 text-orange-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <p class="font-medium text-white">${case_.summary || ''}</p>
+                </div>
+                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-brand text-black">
+                    ${case_.ticket_id}
+                </span>
+            </div>
+            <div class="mt-3 bg-black bg-opacity-30 p-3 rounded border-l-2 border-orange-brand">
+                <p class="text-sm text-white">${formatSimpleText(case_.solution || '')}</p>
+            </div>
+            <div class="mt-2 flex justify-between items-center">
+                <div class="flex gap-2">
+                    <div class="bg-black bg-opacity-30 px-2 py-1 rounded text-xs">
+                        <span class="text-orange-grey">Priorité:</span>
+                        <span class="ml-1 text-white">${case_.priority || 'N/A'}</span>
+                    </div>
+                    <div class="bg-black bg-opacity-30 px-2 py-1 rounded text-xs">
+                        <span class="text-orange-grey">Similarité:</span>
+                        <span class="ml-1 text-orange-brand">${case_.similarity}%</span>
+                    </div>
+                </div>
+                <div class="mt-1">
+                    <a href="/kg-visualization/?ticket_id=${case_.ticket_id}" class="text-xs text-orange-brand hover:text-orange-light flex items-center">
+                        <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 9a2 2 0 114 0 2 2 0 01-4 0z"></path>
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a4 4 0 00-3.446 6.032l-2.261 2.26a1 1 0 101.414 1.415l2.261-2.261A4 4 0 1011 5z" clip-rule="evenodd"></path>
+                        </svg>
+                        Consulter
+                    </a>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    // Défilement doux vers les suggestions
+    scrollToSuggestions();
+}
+
+// Rendu du contenu structuré (avec support pour le nouveau format et fallback)
+function renderStructuredContent(structuredContent, fallbackText, sourceTicketId) {
+    const sections = structuredContent.sections || [];
+    
+    if (sections.length === 0 && fallbackText) {
+        // Aucune section structurée fournie, utiliser le fallback
+        return createDefaultStructure(fallbackText);
+    }
+    
+    let html = '<div class="py-2">';
+    
+    // Introduction/Contexte si présent
+    const contextSection = sections.find(s => s.type === 'CONTEXT');
+    if (contextSection) {
+        html += `
+            <div class="mb-4">
+                ${formatText(contextSection.content)}
+            </div>
+        `;
+    }
+    
+    // Résumé du problème
+    const summarySection = sections.find(s => s.type === 'SUMMARY');
+    if (summarySection) {
+        html += `
+            <div class="section">
+                <div class="section-title">Problème identifié</div>
+                <div>${formatText(summarySection.content)}</div>
+            </div>
+        `;
+    }
+    
+    // Solution proposée
+    const solutionSection = sections.find(s => s.type === 'SOLUTION');
+    if (solutionSection) {
+        html += `
+            <div class="section">
+                <div class="section-title">Solution proposée</div>
+                <div>${formatText(solutionSection.content)}</div>
+            </div>
+        `;
+    }
+    
+    // Étapes à suivre si présentes
+    const stepsSection = sections.find(s => s.type === 'STEPS');
+    if (stepsSection) {
+        html += `
+            <div class="section">
+                <div class="section-title">Étapes à suivre</div>
+        `;
+        
+        if (Array.isArray(stepsSection.content)) {
+            html += `
+                <ol class="steps">
+                    ${stepsSection.content.map(step => `<li>${formatText(step)}</li>`).join('')}
+                </ol>
+            `;
+        } else {
+            html += `<div>${formatText(stepsSection.content)}</div>`;
+        }
+        
+        html += `</div>`;
+    }
+    
+    // Avertissements si présents
+    const warningSection = sections.find(s => s.type === 'WARNING');
+    if (warningSection) {
+        html += `
+            <div class="section warning">
+                <div class="section-title">Attention</div>
+                <div>${formatText(warningSection.content)}</div>
+            </div>
+        `;
+    }
+    
+    // Note explicative sur la source
+    html += `
+        <div class="mt-4 text-xs text-orange-grey">
+            Cette solution est basée sur l'analyse du ticket <span class="ticket-id">${sourceTicketId}</span> et d'autres tickets similaires dans notre base de connaissances.
+        </div>
+    `;
+    
+    html += '</div>';
+    return html;
+}
+
+// Création d'une structure par défaut quand aucune structure n'est disponible
+function createDefaultStructure(text) {
+    if (!text) {
+        return '<div class="py-2">Aucune solution trouvée</div>';
+    }
+    
+    // Analyse du texte pour trouver la structure
+    // Identification des sections principales
+    const lines = text.split('\n');
+    
+    // Recherche des étapes numérotées
+    const hasSteps = /\d+\.\s.+/g.test(text);
+    
+    // Recherche de numéros de ticket dans le texte
+    const ticketRegex = /([A-Z]{3}\d{12,})/g;
+    let sourceTicketId = '';
+    let ticketMatch;
+    
+    while ((ticketMatch = ticketRegex.exec(text)) !== null) {
+        sourceTicketId = ticketMatch[1];
+        break; // On prend juste le premier ticket trouvé
+    }
+    
+    // Remplacement des tickets par du HTML formaté
+    text = text.replace(ticketRegex, '<span class="ticket-id">$1</span>');
+    
+    let html = '<div class="py-2">';
+    
+    // Si des étapes numérotées sont détectées
+    if (hasSteps) {
+        const parts = text.split(/(?=\d+\.\s)/);
+        
+        // Premier bloc est l'introduction/contexte
+        if (parts.length > 0) {
+            html += `
+                <div class="section">
+                    <div class="section-title">Problème identifié</div>
+                    <div>${formatText(parts[0])}</div>
+                </div>
+            `;
+        }
+        
+        // Les autres blocs sont les étapes
+        if (parts.length > 1) {
+            html += `
+                <div class="section">
+                    <div class="section-title">Étapes à suivre</div>
+                    <ol class="steps">
+                        ${parts.slice(1).map(step => `<li>${formatText(step)}</li>`).join('')}
+                    </ol>
+                </div>
+            `;
+        }
+    } else {
+        // Si pas d'étapes, diviser le texte en paragraphes
+        const paragraphs = text.split('\n\n');
+        
+        if (paragraphs.length >= 2) {
+            // Premier paragraphe comme introduction/contexte
+            html += `
+                <div class="section">
+                    <div class="section-title">Problème identifié</div>
+                    <div>${formatText(paragraphs[0])}</div>
+                </div>
+            `;
+            
+            // Autres paragraphes comme solution
+            html += `
+                <div class="section">
+                    <div class="section-title">Solution proposée</div>
+                    <div>${formatText(paragraphs.slice(1).join('\n\n'))}</div>
+                </div>
+            `;
+        } else {
+            // Un seul paragraphe - tout est solution
+            html += `
+                <div class="section">
+                    <div class="section-title">Solution proposée</div>
+                    <div>${formatText(text)}</div>
+                </div>
+            `;
+        }
+    }
+    
+    // Note explicative sur la source
+    if (sourceTicketId) {
+        html += `
+            <div class="mt-4 text-xs text-orange-grey">
+                Cette solution est basée sur l'analyse du ticket <span class="ticket-id">${sourceTicketId}</span> et d'autres tickets similaires dans notre base de connaissances.
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+// Fonctions de formatage de texte
+function formatText(text) {
+    if (!text) return '';
+    
+    // Supprimer les ** tout en mettant en gras
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Mettre en évidence les numéros de ticket
+    text = text.replace(/([A-Z]{3}\d{12,})/g, '<span class="ticket-id">$1</span>');
+    
+    // Mettre en évidence les commandes ou code
+    text = text.replace(/`([^`]+)`/g, '<span class="code">$1</span>');
+    
+    // Convertir les nouvelles lignes en balises <br> sauf pour les listes
+    if (!/<li>/.test(text)) {
+        text = text.replace(/\n/g, '<br>');
+    }
+    
+    return text;
+}
+
+// Version simplifiée pour les cas similaires
+function formatSimpleText(text) {
+    if (!text) return '';
+    
+    // Supprimer les ** tout en mettant en gras
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Mettre en évidence les numéros de ticket
+    text = text.replace(/([A-Z]{3}\d{12,})/g, '<span class="font-mono text-orange-brand">$1</span>');
+    
+    return text;
+}
+
+// Fonction pour faire défiler en douceur jusqu'aux suggestions
+function scrollToSuggestions() {
+    document.getElementById('suggestionSection').scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+    });
+}
+</script>
+{% endblock %}

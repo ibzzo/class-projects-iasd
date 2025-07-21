@@ -1,0 +1,108 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système de Résolution d'Incidents avec GARDQ - Orange</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'orange-brand': '#FF7900', /* Pantone 151 - Couleur principale */
+                        'orange-dark': '#F16E00',
+                        'orange-light': '#FFF0E5',
+                        'orange-black': '#000000', /* Noir de la marque */
+                        'orange-white': '#FFFFFF', /* Blanc de la marque */
+                        'orange-grey': '#8F8F8F', /* Gris de la marque */
+                    },
+                    fontFamily: {
+                        'helvetica': ['Helvetica', 'Arial', 'sans-serif'],
+                        'helvetica-neue': ['Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Utilisation de polices de substitution en attendant Helvetica */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #000000; /* Fond noir pour mode digital/écobranding */
+            color: #FFFFFF;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: Helvetica, Arial, sans-serif;
+            font-weight: bold;
+        }
+        .square-bullet {
+            list-style-type: square;
+        }
+        /* Styles pour assurer la visibilité des champs de formulaire */
+        input, textarea, select {
+            background-color: #FFFFFF;
+            color: #000000;
+            border: 1px solid #FF7900;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #FF7900;
+            outline: none;
+            ring-color: #FF7900;
+            ring-width: 2px;
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col">
+    <!-- En-tête -->
+    <header class="bg-orange-brand">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-white text-xl font-bold font-helvetica">Orange DQ HelpDesk</span>
+                    </div>
+                    
+                    <!-- Navigation -->
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="{% url 'incident_submission' %}" class="text-white hover:bg-orange-dark px-3 py-2 rounded-md text-sm font-medium">Soumettre un incident</a>
+                            <a href="{% url 'kg_visualization' %}" class="text-white hover:bg-orange-dark px-3 py-2 rounded-md text-sm font-medium">Visualisation KG</a>
+                            <a href="{% url 'metrics' %}" class="text-white hover:bg-orange-dark px-3 py-2 rounded-md text-sm font-medium">Statistiques</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <span class="text-white text-sm font-helvetica-neue">GARDQ</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Contenu principal -->
+    <main class="py-10 flex-grow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Pied de page -->
+    <footer class="bg-black border-t border-orange-brand">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-sm text-orange-grey">© 2025 Orange. Tous droits réservés.</p>
+                </div>
+                <div>
+                    <p class="text-sm text-orange-grey">Implémentation GARDQ (Graph-Augmented Retrieval for Data Quality)</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

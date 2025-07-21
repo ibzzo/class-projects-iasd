@@ -1,0 +1,898 @@
+\documentclass[10pt, aspectratio=169]{beamer}
+\usetheme{metropolis}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fontawesome}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{multicol}
+
+% TikZ libraries
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, shadows, patterns, decorations.pathreplacing, calc, fit, backgrounds}
+\pgfplotsset{compat=1.17}
+
+% Couleurs personnalisées
+\definecolor{gardqblue}{RGB}{79, 195, 247}
+\definecolor{gardqgreen}{RGB}{129, 199, 132}
+\definecolor{gardqorange}{RGB}{255, 183, 77}
+\definecolor{gardqred}{RGB}{239, 83, 80}
+\definecolor{gardqpurple}{RGB}{149, 117, 205}
+\definecolor{gardqgray}{RGB}{117, 117, 117}
+\definecolor{neo4jgreen}{RGB}{0, 140, 201}
+
+% Configuration des listings
+\lstset{
+    basicstyle=\tiny\ttfamily,
+    keywordstyle=\color{gardqblue}\bfseries,
+    commentstyle=\color{gardqgray}\itshape,
+    stringstyle=\color{gardqgreen},
+    breaklines=true,
+    showstringspaces=false,
+    frame=single,
+    frameround=tttt,
+    framexleftmargin=0pt,
+    numbers=left,
+    numberstyle=\tiny\color{gardqgray},
+    xleftmargin=0.5cm,
+    xrightmargin=0.2cm
+}
+
+% Informations de la présentation
+\title{GARDQ}
+\subtitle{Graph Augmented Retrieval for Data Quality}
+\author{Ibrahim Adiao}
+\date{\today}
+\institute{Système Intelligent de Gestion des Incidents IT}
+
+% Styles pour les nœuds
+\tikzstyle{ticketnode} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=gardqblue!20, font=\footnotesize]
+\tikzstyle{sectionnode} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=0.8cm, text centered, draw=black, fill=gardqgreen!20, font=\footnotesize]
+\tikzstyle{entitynode} = [rectangle, rounded corners, minimum width=2cm, minimum height=0.8cm, text centered, draw=black, fill=gardqorange!20, font=\footnotesize]
+\tikzstyle{processnode} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=gardqpurple!20, font=\footnotesize]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
+\begin{document}
+
+% Page de titre
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% Table des matières
+\begin{frame}{Agenda}
+    \tableofcontents
+\end{frame}
+
+% Section 1: Introduction
+\section{Introduction et Problématique}
+
+\begin{frame}{Contexte: Gestion des Incidents IT}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Défis Actuels}
+                \begin{itemize}
+                    \item \faExclamationTriangle{} Volume croissant d'incidents
+                    \item \faClock{} Temps de résolution élevé
+                    \item \faDatabase{} Données non structurées
+                    \item \faUsers{} Expertise dispersée
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Solution GARDQ}
+                \begin{itemize}
+                    \item \faLightbulb{} GraphRAG innovant
+                    \item \faBrain{} IA générative (GPT-4)
+                    \item \faProjectDiagram{} Neo4j Knowledge Graph
+                    \item \faChartLine{} Amélioration continue
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
+    
+    \vspace{0.5cm}
+    \begin{alertblock}{Objectif}
+        Transformer l'historique des incidents en base de connaissances intelligente pour améliorer la qualité des données et réduire le temps de résolution.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{Vue d'Ensemble du Système GARDQ}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.8, transform shape]
+        % Nodes
+        \node[ticketnode] (ticket) at (0,0) {Ticket\\d'Incident};
+        \node[processnode] (construct) at (3,0) {Construction\\du Graphe};
+        \node[processnode] (neo4j) at (6,0) {\includegraphics[width=0.5cm]{neo4j-icon.png}\\Neo4j};
+        \node[processnode] (retrieval) at (9,0) {Retrieval\\Augmenté};
+        \node[processnode] (llm) at (6,-3) {\faRobot{} GPT-4o\\mini};
+        \node[ticketnode] (solution) at (9,-3) {Solution\\Générée};
+        
+        % Arrows
+        \draw[arrow] (ticket) -- (construct);
+        \draw[arrow] (construct) -- (neo4j);
+        \draw[arrow] (neo4j) -- (retrieval);
+        \draw[arrow] (construct) -- (llm);
+        \draw[arrow] (retrieval) -- (solution);
+        \draw[arrow] (llm) -- (solution);
+        
+        % Background
+        \begin{scope}[on background layer]
+            \node[fit=(ticket)(construct)(neo4j)(retrieval)(llm)(solution), 
+                  fill=gray!10, rounded corners, inner sep=0.3cm] {};
+        \end{scope}
+    \end{tikzpicture}
+    \end{center}
+    
+    \vspace{0.5cm}
+    \begin{enumerate}
+        \item \textbf{Analyse} et structuration des tickets via LLM
+        \item \textbf{Construction} du graphe de connaissances
+        \item \textbf{Recherche} augmentée par similarité
+        \item \textbf{Génération} de solutions contextualisées
+    \end{enumerate}
+\end{frame}
+
+% Section 2: Construction du Graphe
+\section{Construction du Graphe de Connaissances}
+
+\begin{frame}{Transformation: Du Texte au Graphe}
+    \begin{columns}[T]
+        \begin{column}{0.45\textwidth}
+            \begin{block}{Données Non Structurées}
+                \begin{tcolorbox}[colback=red!5!white,colframe=red!75!black]
+                    \footnotesize
+                    \textbf{Ticket INC0001234:}\\
+                    "Problème de connexion à l'application ServiceNow. Erreur 500. Priorité P2. Résolu en redémarrant le service."
+                \end{tcolorbox}
+            \end{block}
+        \end{column}
+        
+        \begin{column}{0.55\textwidth}
+            \begin{block}{Graphe Structuré}
+                \begin{center}
+                \begin{tikzpicture}[scale=0.6, transform shape]
+                    % Central ticket
+                    \node[ticketnode, minimum width=2cm] (ticket) at (0,0) {Ticket\\INC0001234};
+                    
+                    % Sections
+                    \node[sectionnode, minimum width=1.8cm] (summary) at (-2,-2) {SUMMARY};
+                    \node[sectionnode, minimum width=1.8cm] (priority) at (0,-2) {PRIORITY};
+                    \node[sectionnode, minimum width=1.8cm] (solution) at (2,-2) {SOLUTION};
+                    
+                    % Entities
+                    \node[entitynode, minimum width=1.5cm] (p2) at (0,-4) {Priority\\P2};
+                    \node[entitynode, minimum width=1.5cm] (app) at (-3,-4) {Application\\ServiceNow};
+                    
+                    % Relations
+                    \draw[arrow] (ticket) -- node[left, font=\tiny] {HAS\_SECTION} (summary);
+                    \draw[arrow] (ticket) -- node[right, font=\tiny] {HAS\_SECTION} (priority);
+                    \draw[arrow] (ticket) -- node[right, font=\tiny] {HAS\_SECTION} (solution);
+                    \draw[arrow] (priority) -- node[right, font=\tiny] {REFERS\_TO} (p2);
+                    \draw[arrow, dashed] (summary) -- node[left, font=\tiny] {REFERS\_TO} (app);
+                \end{tikzpicture}
+                \end{center}
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Pipeline de Transformation avec LLM}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.9, transform shape, node distance=1.5cm]
+        % Process flow
+        \node[processnode] (raw) at (0,0) {Ticket Brut};
+        \node[processnode, right=of raw] (analyze) {Analyse GPT-4};
+        \node[processnode, right=of analyze] (extract) {Extraction};
+        \node[processnode, below=of extract] (embed) {Embeddings};
+        \node[processnode, left=of embed] (entities) {Entités};
+        \node[processnode, below=of embed] (store) {Stockage Neo4j};
+        
+        % Arrows with labels
+        \draw[arrow] (raw) -- (analyze);
+        \draw[arrow] (analyze) -- (extract);
+        \draw[arrow] (extract) -- (embed);
+        \draw[arrow] (extract) -- (entities);
+        \draw[arrow] (embed) -- (store);
+        \draw[arrow] (entities) -- (store);
+        
+        % Annotations
+        \node[above=0.3cm of analyze, font=\tiny, text=gardqgray] {Structuration};
+        \node[right=0.3cm of extract, font=\tiny, text=gardqgray] {Sections};
+        \node[below=0.3cm of entities, font=\tiny, text=gardqgray] {Normalisation};
+    \end{tikzpicture}
+    \end{center}
+    
+    \vspace{0.3cm}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{lstlisting}[language=Python, basicstyle=\tiny\ttfamily]
+# Analyse avec GPT-4
+structured = llm.analyze_ticket(raw_ticket)
+
+# Extraction des sections
+sections = {
+    "SUMMARY": structured["summary"],
+    "SOLUTION": structured["solution"],
+    "ROOT_CAUSE": structured["root_cause"]
+}
+            \end{lstlisting}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{lstlisting}[language=Python, basicstyle=\tiny\ttfamily]
+# Création des embeddings
+for section in ["SUMMARY", "SOLUTION"]:
+    embedding = encoder.encode(sections[section])
+    
+# Extraction des entités
+entities = {
+    "Application": structured["app"],
+    "Priority": structured["priority"]
+}
+            \end{lstlisting}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Types de Relations dans GARDQ}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.8, transform shape]
+        % Define nodes in a circular arrangement
+        \node[ticketnode] (t1) at (0,0) {Ticket A};
+        \node[ticketnode] (t2) at (4,0) {Ticket B};
+        \node[ticketnode] (t3) at (2,2) {Ticket Parent};
+        \node[sectionnode] (s1) at (-2,-1) {Section};
+        \node[entitynode] (e1) at (-2,-3) {Entity};
+        
+        % Relations
+        \draw[arrow, thick, color=gardqblue] (t1) -- node[below] {\footnotesize HAS\_SECTION} (s1);
+        \draw[arrow, thick, color=gardqgreen] (s1) -- node[left] {\footnotesize REFERS\_TO} (e1);
+        \draw[arrow, thick, color=gardqorange] (t1) -- node[above left] {\footnotesize PARENT\_TICKET} (t3);
+        \draw[arrow, thick, color=gardqred, <->] (t1) -- node[below] {\footnotesize SIMILAR\_TO} (t2);
+        
+        % Similarity score
+        \node[above=0.1cm of t1, font=\tiny] {sim: 0.85};
+    \end{tikzpicture}
+    \end{center}
+    
+    \vspace{0.5cm}
+    \begin{table}[h]
+    \centering
+    \footnotesize
+    \begin{tabular}{lll}
+    \toprule
+    \textbf{Relation} & \textbf{Direction} & \textbf{Description} \\
+    \midrule
+    HAS\_SECTION & Ticket → Section & Contenu structuré \\
+    REFERS\_TO & Section → Entity & Références métier \\
+    PARENT\_TICKET & Child → Parent & Hiérarchie \\
+    SIMILAR\_TO & Bidirectionnelle & Similarité > 0.7 \\
+    \bottomrule
+    \end{tabular}
+    \end{table}
+\end{frame}
+
+% Section 3: Stockage Neo4j
+\section{Stockage dans Neo4j}
+
+\begin{frame}{Architecture de Stockage Neo4j}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.9, transform shape]
+        % Neo4j logo/database
+        \node[cylinder, draw, fill=neo4jgreen!20, minimum height=2cm, minimum width=3cm] (db) at (0,0) {Neo4j\\Knowledge Graph};
+        
+        % Node types around the database
+        \node[ticketnode, above left=1.5cm of db] (ticket) {Ticket\\ticket\_id};
+        \node[sectionnode, above right=1.5cm of db] (section) {Section\\content, embedding};
+        \node[entitynode, below left=1.5cm of db] (cause) {Cause\\name};
+        \node[entitynode, below right=1.5cm of db] (priority) {Priority\\name};
+        
+        % Connections
+        \draw[arrow, dashed] (ticket) -- (db);
+        \draw[arrow, dashed] (section) -- (db);
+        \draw[arrow, dashed] (cause) -- (db);
+        \draw[arrow, dashed] (priority) -- (db);
+        
+        % Constraints box
+        \node[rectangle, draw, fill=yellow!20, below=2.5cm of db, text width=6cm, font=\tiny] (constraints) {
+            \textbf{Contraintes:}\\
+            • UNIQUE (Ticket.ticket\_id)\\
+            • UNIQUE (Section.section\_id, Section.ticket\_id)\\
+            • UNIQUE (Cause.name), UNIQUE (Priority.name)
+        };
+    \end{tikzpicture}
+    \end{center}
+    
+    \begin{block}{Caractéristiques du Modèle}
+        \begin{itemize}
+            \item \faCheck{} Séparation contenu/structure
+            \item \faCheck{} Embeddings vectoriels (384 dimensions)
+            \item \faCheck{} Entités partagées entre tickets
+            \item \faCheck{} Index optimisés pour la performance
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Requêtes Cypher - Création d'un Ticket}
+    \begin{lstlisting}[language=SQL, basicstyle=\scriptsize\ttfamily, keywordstyle=\color{neo4jgreen}\bfseries]
+// 1. Créer le nœud Ticket
+MERGE (t:Ticket {ticket_id: 'INC0001234'})
+
+// 2. Créer les sections avec embeddings
+CREATE (s:Section {
+    section_id: 'INC0001234_SUMMARY',
+    type: 'SUMMARY',
+    content: 'Problème de connexion ServiceNow',
+    ticket_id: 'INC0001234',
+    embedding: [0.123, -0.456, 0.789, ...] // 384 dimensions
+})
+
+// 3. Relier ticket et sections
+MATCH (t:Ticket {ticket_id: 'INC0001234'})
+MATCH (s:Section {ticket_id: 'INC0001234'})
+MERGE (t)-[:HAS_SECTION]->(s)
+
+// 4. Créer et relier les entités
+MERGE (app:Application {name: 'ServiceNow'})
+MERGE (prio:Priority {name: 'P2'})
+WITH app, prio
+MATCH (s_app:Section {section_id: 'INC0001234_APPLICATION'})
+MATCH (s_prio:Section {section_id: 'INC0001234_PRIORITY'})
+MERGE (s_app)-[:REFERS_TO]->(app)
+MERGE (s_prio)-[:REFERS_TO]->(prio)
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}{Optimisations et Performance}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Index Neo4j}
+                \begin{lstlisting}[language=SQL, basicstyle=\tiny\ttfamily]
+CREATE INDEX ticket_idx 
+  FOR (t:Ticket) ON (t.ticket_id);
+  
+CREATE INDEX section_idx 
+  FOR (s:Section) 
+  ON (s.section_id, s.ticket_id);
+  
+CREATE INDEX section_type_idx 
+  FOR (s:Section) ON (s.type);
+                \end{lstlisting}
+            \end{block}
+        \end{column}
+        
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Métriques de Performance}
+                \begin{center}
+                \begin{tikzpicture}[scale=0.7]
+                    \begin{axis}[
+                        ybar,
+                        bar width=0.5cm,
+                        ylabel={\footnotesize Performance},
+                        symbolic x coords={Requête,Insertion,Similarité},
+                        xtick=data,
+                        ymin=0,
+                        ymax=150,
+                        ylabel near ticks,
+                        xlabel near ticks,
+                        tick label style={font=\tiny},
+                        label style={font=\footnotesize},
+                        height=4cm,
+                        width=6cm
+                    ]
+                    \addplot[fill=gardqblue] coordinates {
+                        (Requête,50)
+                        (Insertion,100)
+                        (Similarité,80)
+                    };
+                    \end{axis}
+                \end{tikzpicture}
+                \end{center}
+                \footnotesize
+                \faCheckCircle{} Temps moyen < 100ms\\
+                \faDatabase{} Capacité > 1M tickets\\
+                \faLink{} 15-20 relations/ticket
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% Section 4: Processus de Retrieval
+\section{Processus de Retrieval Augmenté}
+
+\begin{frame}{Retrieval en 3 Étapes}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.85, transform shape]
+        % Step boxes
+        \node[processnode, fill=gardqblue!30, minimum width=8cm] (step1) at (0,0) {
+            \textbf{1. Analyse de la Requête}\\
+            \footnotesize Extraction d'entités et intentions via GPT-4
+        };
+        
+        \node[processnode, fill=gardqgreen!30, minimum width=8cm, below=0.8cm of step1] (step2) {
+            \textbf{2. Recherche de Tickets Similaires}\\
+            \footnotesize Similarité cosinus sur embeddings vectoriels
+        };
+        
+        \node[processnode, fill=gardqorange!30, minimum width=8cm, below=0.8cm of step2] (step3) {
+            \textbf{3. Extraction du Sous-Graphe}\\
+            \footnotesize Requêtes Cypher dynamiques pour contexte enrichi
+        };
+        
+        % Arrows
+        \draw[arrow, very thick] (step1) -- (step2);
+        \draw[arrow, very thick] (step2) -- (step3);
+        
+        % Side annotations
+        \node[right=0.5cm of step1, text width=3cm, font=\tiny] {
+            • Entités métier\\
+            • Type de problème\\
+            • Mots-clés
+        };
+        
+        \node[right=0.5cm of step2, text width=3cm, font=\tiny] {
+            • Top-K = 10\\
+            • Seuil > 0.5\\
+            • Multi-sections
+        };
+        
+        \node[right=0.5cm of step3, text width=3cm, font=\tiny] {
+            • Relations 2-hop\\
+            • Entités liées\\
+            • Historique
+        };
+    \end{tikzpicture}
+    \end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Étape 1: Analyse de la Requête}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Requête Utilisateur}
+                \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black]
+                    \footnotesize
+                    "Impossible de se connecter à ServiceNow, erreur 500"
+                \end{tcolorbox}
+            \end{block}
+            
+            \begin{block}{Prompt GPT-4}
+                \begin{lstlisting}[language=Python, basicstyle=\tiny\ttfamily]
+prompt = f"""
+Analysez cette requête d'incident:
+"{query}"
+
+Extrayez:
+1. Entités (applications, services)
+2. Type de problème
+3. Mots-clés importants
+4. Intention de recherche
+"""
+                \end{lstlisting}
+            \end{block}
+        \end{column}
+        
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Résultat de l'Analyse}
+                \begin{lstlisting}[language=JavaScript, basicstyle=\tiny\ttfamily]
+{
+  "entities": [
+    "ServiceNow", 
+    "login"
+  ],
+  "problem_type": "authentication",
+  "keywords": [
+    "connexion", 
+    "erreur 500"
+  ],
+  "intent": "find_similar_auth_issues"
+}
+                \end{lstlisting}
+            \end{block}
+            
+            \begin{alertblock}{Avantage}
+                \footnotesize
+                Compréhension contextuelle permettant une recherche ciblée
+            \end{alertblock}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Étape 2: Recherche par Similarité}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.8, transform shape]
+        % Query embedding
+        \node[rectangle, draw, fill=gardqpurple!20] (query) at (0,0) {Query\\Embedding};
+        
+        % Database
+        \node[cylinder, draw, fill=neo4jgreen!20, right=2cm of query] (db) {Neo4j};
+        
+        % Similar tickets
+        \node[ticketnode, above right=1cm and 3cm of db] (t1) {Ticket 1\\sim: 0.92};
+        \node[ticketnode, right=3cm of db] (t2) {Ticket 2\\sim: 0.87};
+        \node[ticketnode, below right=1cm and 3cm of db] (t3) {Ticket 3\\sim: 0.84};
+        
+        % Arrows
+        \draw[arrow, thick] (query) -- node[above] {\tiny Cosine} (db);
+        \draw[arrow, dashed] (db) -- (t1);
+        \draw[arrow, dashed] (db) -- (t2);
+        \draw[arrow, dashed] (db) -- (t3);
+    \end{tikzpicture}
+    \end{center}
+    
+    \begin{lstlisting}[language=SQL, basicstyle=\scriptsize\ttfamily]
+MATCH (t:Ticket)-[:HAS_SECTION]->(s:Section)
+WHERE s.embedding IS NOT NULL
+WITH t, s, gds.similarity.cosine(s.embedding, $query_embedding) AS similarity
+WHERE similarity > 0.5
+WITH t, MAX(similarity) AS max_sim
+ORDER BY max_sim DESC
+LIMIT 10
+RETURN t.ticket_id, max_sim
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Étape 3: Extraction du Sous-Graphe}
+    \begin{lstlisting}[language=SQL, basicstyle=\tiny\ttfamily, keywordstyle=\color{neo4jgreen}\bfseries]
+// Requête Cypher générée dynamiquement
+MATCH (t:Ticket)
+WHERE t.ticket_id IN $similar_ticket_ids
+MATCH path = (t)-[:HAS_SECTION]->(s:Section)
+OPTIONAL MATCH (s)-[:REFERS_TO]->(e)
+WHERE e:Application AND e.name = 'ServiceNow'
+OPTIONAL MATCH (t)-[:PARENT_TICKET]->(parent:Ticket)
+OPTIONAL MATCH (t)-[:SIMILAR_TO]-(related:Ticket)
+RETURN 
+    t.ticket_id as ticket,
+    collect(DISTINCT {
+        section: s.type,
+        content: s.content,
+        entity: e.name
+    }) as details,
+    parent.ticket_id as parent,
+    collect(DISTINCT related.ticket_id) as related_tickets
+    \end{lstlisting}
+    
+    \begin{block}{Contexte Enrichi Extrait}
+        \begin{itemize}
+            \item \faCheckSquare{} Sections pertinentes des tickets similaires
+            \item \faCheckSquare{} Entités métier communes
+            \item \faCheckSquare{} Relations parent-enfant
+            \item \faCheckSquare{} Réseau de tickets liés
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+% Section 5: Communication avec le LLM
+\section{Communication avec le LLM}
+
+\begin{frame}{Architecture de Communication avec GPT-4}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.85, transform shape, node distance=2cm]
+        % Input components
+        \node[rectangle, draw, fill=gardqblue!20, text width=2.5cm, align=center] (context) at (0,0) {Contexte\\Graphe};
+        \node[rectangle, draw, fill=gardqgreen!20, text width=2.5cm, align=center, below=0.5cm of context] (query) {Requête\\Utilisateur};
+        \node[rectangle, draw, fill=gardqorange!20, text width=2.5cm, align=center, above=0.5cm of context] (system) {Instructions\\Système};
+        
+        % Central processing
+        \node[processnode, right=2cm of context, minimum width=3cm] (prompt) {Prompt\\Engineering};
+        
+        % API
+        \node[processnode, fill=gardqpurple!30, right=2cm of prompt, minimum width=3cm] (api) {\faRobot{} GPT-4o\\mini API};
+        
+        % Output
+        \node[rectangle, draw, fill=gardqgreen!30, right=2cm of api, text width=2.5cm, align=center] (output) {Solution\\Structurée};
+        
+        % Connections
+        \draw[arrow] (context) -- (prompt);
+        \draw[arrow] (query) -- (prompt);
+        \draw[arrow] (system) -- (prompt);
+        \draw[arrow] (prompt) -- node[above] {\tiny Prompt} (api);
+        \draw[arrow] (api) -- node[above] {\tiny JSON} (output);
+        
+        % Annotations
+        \node[below=0.3cm of prompt, font=\tiny, text=gardqgray] {Optimisation};
+        \node[below=0.3cm of api, font=\tiny, text=gardqgray] {Génération};
+    \end{tikzpicture}
+    \end{center}
+    
+    \vspace{0.3cm}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Composants du Prompt}
+                \footnotesize
+                \faCheckCircle{} Instructions système\\
+                \faCheckCircle{} Contexte enrichi du graphe\\
+                \faCheckCircle{} Requête utilisateur\\
+                \faCheckCircle{} Format de sortie structuré
+            \end{block}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Optimisations}
+                \footnotesize
+                \faRocket{} Few-shot examples\\
+                \faRocket{} Température = 0.3\\
+                \faRocket{} Max tokens optimisé\\
+                \faRocket{} Retry avec clarification
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Prompt Engineering Optimisé}
+    \begin{lstlisting}[language=Python, basicstyle=\scriptsize\ttfamily]
+def build_llm_prompt(query: str, graph_context: dict) -> str:
+    system_prompt = """
+    Vous êtes un expert en résolution d'incidents IT.
+    Basez-vous sur les tickets similaires pour suggérer une solution.
+    
+    Format de réponse:
+    1. Analyse du problème
+    2. Solution suggérée (étapes détaillées)
+    3. Tickets de référence utilisés
+    4. Niveau de confiance (0-100%)
+    """
+    
+    context = f"""
+    Tickets similaires trouvés:
+    {format_tickets(graph_context['similar_tickets'])}
+    
+    Entités communes:
+    - Applications: {graph_context['applications']}
+    - Causes fréquentes: {graph_context['common_causes']}
+    
+    Solutions appliquées précédemment:
+    {format_solutions(graph_context['solutions'])}
+    """
+    
+    return f"{system_prompt}\n\n{context}\n\nProblème: {query}"
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Exemple de Réponse Générée}
+    \begin{block}{Entrée}
+        \footnotesize
+        "Impossible de se connecter à ServiceNow, erreur 500"
+    \end{block}
+    
+    \begin{block}{Sortie GPT-4}
+        \begin{lstlisting}[language=JavaScript, basicstyle=\tiny\ttfamily]
+{
+  "analysis": "Problème d'authentification ServiceNow avec erreur serveur",
+  "suggested_solution": {
+    "steps": [
+      "1. Vérifier le statut du service ServiceNow",
+      "2. Contrôler les logs d'authentification",
+      "3. Redémarrer le service d'authentification SSO",
+      "4. Vider le cache des sessions utilisateurs"
+    ],
+    "estimated_time": "15-20 minutes"
+  },
+  "reference_tickets": ["INC0001234", "INC0001567", "INC0001890"],
+  "confidence": 85,
+  "additional_notes": "Pattern récurrent après mise à jour système"
+}
+        \end{lstlisting}
+    \end{block}
+    
+    \begin{alertblock}{Points Clés}
+        \footnotesize
+        \faCheck{} Solution contextualisée basée sur l'historique\\
+        \faCheck{} Références traçables aux tickets sources\\
+        \faCheck{} Score de confiance pour la transparence
+    \end{alertblock}
+\end{frame}
+
+% Section 6: Résultats et Performance
+\section{Résultats et Performance}
+
+\begin{frame}{Métriques de Performance}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Métriques de Récupération}
+                \begin{center}
+                \begin{tikzpicture}[scale=0.7]
+                    \begin{axis}[
+                        ybar,
+                        bar width=0.4cm,
+                        ylabel={\footnotesize Score},
+                        symbolic x coords={MRR,Recall@5,NDCG@10},
+                        xtick=data,
+                        ymin=0,
+                        ymax=1,
+                        legend pos=north west,
+                        tick label style={font=\tiny},
+                        label style={font=\footnotesize},
+                        height=5cm,
+                        width=6cm
+                    ]
+                    \addplot[fill=gardqred!70] coordinates {
+                        (MRR,0.42) (Recall@5,0.58) (NDCG@10,0.65)
+                    };
+                    \addplot[fill=gardqgreen!70] coordinates {
+                        (MRR,0.75) (Recall@5,0.87) (NDCG@10,0.91)
+                    };
+                    \legend{Baseline, GARDQ}
+                    \end{axis}
+                \end{tikzpicture}
+                \end{center}
+            \end{block}
+        \end{column}
+        
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Améliorations vs Baseline}
+                \begin{table}[h]
+                \centering
+                \footnotesize
+                \begin{tabular}{lc}
+                \toprule
+                \textbf{Métrique} & \textbf{Amélioration} \\
+                \midrule
+                MRR & \textcolor{gardqgreen}{+78.6\%} \\
+                Recall@5 & \textcolor{gardqgreen}{+50.0\%} \\
+                NDCG@10 & \textcolor{gardqgreen}{+40.0\%} \\
+                BLEU-4 & \textcolor{gardqgreen}{+32.0\%} \\
+                \bottomrule
+                \end{tabular}
+                \end{table}
+            \end{block}
+        \end{column}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \begin{block}{Impact Opérationnel}
+        \begin{center}
+        \begin{tabular}{lll}
+        \faClockO{} \textbf{Temps de résolution:} -28.6\% &
+        \faCheckCircle{} \textbf{Résolution 1er contact:} +35\% &
+        \faSmileO{} \textbf{Satisfaction:} +42\%
+        \end{tabular}
+        \end{center}
+    \end{block}
+\end{frame}
+
+\begin{frame}{Analyse Qualitative des Résultats}
+    \begin{columns}[T]
+        \begin{column}{0.6\textwidth}
+            \begin{block}{Forces du Système GARDQ}
+                \begin{itemize}
+                    \item \textbf{Compréhension contextuelle}
+                    \begin{itemize}
+                        \footnotesize
+                        \item Analyse sémantique des requêtes
+                        \item Extraction automatique d'entités
+                    \end{itemize}
+                    \item \textbf{Recherche hybride}
+                    \begin{itemize}
+                        \footnotesize
+                        \item Vectorielle + structure graphe
+                        \item Relations multi-niveaux
+                    \end{itemize}
+                    \item \textbf{Génération intelligente}
+                    \begin{itemize}
+                        \footnotesize
+                        \item Solutions personnalisées
+                        \item Traçabilité complète
+                    \end{itemize}
+                \end{itemize}
+            \end{block}
+        \end{column}
+        
+        \begin{column}{0.4\textwidth}
+            \begin{block}{ROI Estimé}
+                \begin{center}
+                \begin{tikzpicture}[scale=0.6]
+                    \pie[
+                        text=legend,
+                        radius=2,
+                        color={gardqgreen!70, gardqblue!70, gardqorange!70}
+                    ]{
+                        30/Réduction coûts,
+                        40/Productivité,
+                        30/Capitalisation
+                    }
+                \end{tikzpicture}
+                \end{center}
+            \end{block}
+        \end{column}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Retour d'Expérience LinkedIn}
+        \footnotesize
+        "Déployé pendant 6 mois dans l'équipe support, réduction médiane du temps de résolution par ticket de 28.6\%"
+    \end{alertblock}
+\end{frame}
+
+% Section 7: Conclusion
+\section{Conclusion et Perspectives}
+
+\begin{frame}{Contributions et Innovations}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Contributions Principales}
+                \begin{enumerate}
+                    \item \textbf{GraphRAG appliqué aux incidents IT}
+                    \begin{itemize}
+                        \footnotesize
+                        \item Première implémentation complète
+                        \item Adaptation du papier LinkedIn
+                    \end{itemize}
+                    \item \textbf{Pipeline automatisé}
+                    \begin{itemize}
+                        \footnotesize
+                        \item Structuration via LLM
+                        \item Construction de graphe scalable
+                    \end{itemize}
+                    \item \textbf{Méthode d'évaluation}
+                    \begin{itemize}
+                        \footnotesize
+                        \item Métriques adaptées
+                        \item Validation empirique
+                    \end{itemize}
+                \end{enumerate}
+            \end{block}
+        \end{column}
+        
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Perspectives Futures}
+                \begin{itemize}
+                    \item \faLightbulb{} \textbf{Apprentissage continu}
+                    \begin{itemize}
+                        \footnotesize
+                        \item Feedback loop
+                        \item Mise à jour dynamique
+                    \end{itemize}
+                    \item \faGlobe{} \textbf{Support multilingue}
+                    \begin{itemize}
+                        \footnotesize
+                        \item Embeddings multilingues
+                        \item Traduction automatique
+                    \end{itemize}
+                    \item \faChartLine{} \textbf{Analyse prédictive}
+                    \begin{itemize}
+                        \footnotesize
+                        \item Détection de patterns
+                        \item Prévention proactive
+                    \end{itemize}
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
+    
+    \vspace{0.5cm}
+    \begin{center}
+        \Large
+        \textbf{GARDQ transforme les données historiques en intelligence actionnable}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Merci pour votre attention!}
+    \begin{center}
+        \Huge \textbf{Questions?}
+        
+        \vspace{1cm}
+        
+        \Large
+        \faGithub{} Code source disponible\\
+        \faBook{} Documentation complète\\
+        \faEnvelope{} Contact: Ibrahim Adiao
+        
+        \vspace{1cm}
+        
+        \normalsize
+        \textit{Référence: LinkedIn SIGIR '24 - arxiv:2404.17723}
+    \end{center}
+    
+    \vspace{0.5cm}
+    \begin{block}{Démonstration}
+        \centering
+        \textbf{Démonstration en direct du système GARDQ disponible}
+    \end{block}
+\end{frame}
+
+\end{document}

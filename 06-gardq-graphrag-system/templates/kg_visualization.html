@@ -1,0 +1,455 @@
+<!-- templates/kg_visualization.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="bg-black border border-orange-brand shadow sm:rounded-lg p-6">
+        <h3 class="text-lg leading-6 font-bold font-helvetica text-white mb-4">
+            Visualisation du Graphe de Connaissances
+        </h3>
+        
+        <!-- Contrôles pour la visualisation -->
+        <div class="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+                <label for="ticketId" class="block text-sm font-medium text-white">
+                    ID du Ticket (optionnel)
+                </label>
+                <input type="text" 
+                       id="ticketId"
+                       class="mt-1 focus:ring-orange-brand focus:border-orange-brand block w-full shadow-sm sm:text-sm border-orange-grey rounded-md bg-white text-black"
+                       placeholder="Laisser vide pour voir un aperçu global">
+            </div>
+            
+            <div>
+                <label for="depth" class="block text-sm font-medium text-white">
+                    Profondeur d'exploration
+                </label>
+                <select id="depth" 
+                        class="mt-1 block w-full py-2 px-3 border border-orange-brand bg-white rounded-md shadow-sm focus:outline-none focus:ring-orange-brand focus:border-orange-brand sm:text-sm text-black">
+                    <option value="1">1 niveau</option>
+                    <option value="2" selected>2 niveaux</option>
+                    <option value="3">3 niveaux</option>
+                </select>
+            </div>
+            
+            <div class="flex items-end">
+                <button id="refreshGraph"
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-black bg-orange-brand hover:bg-orange-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-brand">
+                    Actualiser le graphe
+                </button>
+            </div>
+        </div>
+        
+        <!-- Légende du graphe -->
+        <div class="mb-4 flex flex-wrap gap-4">
+            <div class="flex items-center">
+                <span class="inline-block w-3 h-3 rounded-full bg-orange-brand mr-2"></span>
+                <span class="text-sm text-white">Ticket</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+                <span class="text-sm text-white">Section</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+                <span class="text-sm text-white">Entité</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block h-1 w-8 bg-orange-brand mr-2"></span>
+                <span class="text-sm text-white">HAS_SECTION</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block h-1 w-8 bg-blue-500 mr-2"></span>
+                <span class="text-sm text-white">SIMILAR_TO</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block h-1 w-8 bg-green-500 mr-2"></span>
+                <span class="text-sm text-white">PARENT_TICKET</span>
+            </div>
+        </div>
+        
+        <!-- Conteneur pour la visualisation D3.js -->
+        <div id="graph-container" class="w-full h-96 border border-orange-brand rounded-lg bg-black overflow-hidden">
+            <!-- Le graphe sera rendu ici -->
+            <div class="flex items-center justify-center h-full text-orange-grey">
+                <span>Chargement du graphe de connaissances...</span>
+            </div>
+        </div>
+        
+        <!-- Informations sur le nœud sélectionné -->
+        <div id="node-info" class="mt-4 p-4 border border-orange-brand rounded-lg hidden">
+            <h4 class="text-md font-medium text-white mb-2">Informations du nœud</h4>
+            <div id="node-details" class="text-sm text-white">
+                <!-- Les détails du nœud seront affichés ici -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// Variables globales
+let svg, simulation, linkElements, nodeElements;
+
+// Configuration globale de la visualisation
+const config = {
+    width: document.getElementById('graph-container').clientWidth,
+    height: document.getElementById('graph-container').clientHeight,
+    nodeRadius: 12,
+    nodeColors: {
+        'Ticket': '#FF7900',    // Orange Brand
+        'Section': '#3B82F6',   // Blue
+        'Priority': '#10B981',  // Green
+        'Cause': '#6366F1',     // Indigo
+        'Application': '#8B5CF6', // Purple
+        'Element': '#EC4899',   // Pink
+        'Unknown': '#6B7280'    // Gray
+    },
+    linkColors: {
+        'HAS_SECTION': '#FF7900',
+        'SIMILAR_TO': '#3B82F6',
+        'PARENT_TICKET': '#10B981',
+        'REFERS_TO': '#6366F1',
+        'CHILD_OF': '#8B5CF6'
+    }
+};
+
+// Fonctions pour le drag & drop
+function dragStarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+}
+
+function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+}
+
+function dragEnded(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+}
+
+// Fonction pour afficher les informations d'un nœud
+function showNodeInfo(event, d) {
+    const nodeInfo = document.getElementById('node-info');
+    const nodeDetails = document.getElementById('node-details');
+    
+    nodeInfo.classList.remove('hidden');
+    
+    // Construction du HTML pour les détails du nœud
+    let detailsHtml = `
+        <div class="mb-2 font-bold">${d.label || d.id}</div>
+        <p><span class="font-semibold">Type:</span> ${d.type}</p>
+    `;
+    
+    // Ajouter des détails spécifiques selon le type de nœud
+    if (d.properties) {
+        // Formatage spécifique selon le type de nœud
+        if (d.type === 'Ticket') {
+            detailsHtml += `<p><span class="font-semibold">ID du ticket:</span> ${d.properties.ticket_id || 'N/A'}</p>`;
+        } else if (d.type === 'Section') {
+            detailsHtml += `
+                <p><span class="font-semibold">Type de section:</span> ${d.properties.type || 'N/A'}</p>
+                <p><span class="font-semibold">ID du ticket:</span> ${d.properties.ticket_id || 'N/A'}</p>
+                <div class="mt-2 border-t border-orange-grey pt-2">
+                    <span class="font-semibold">Contenu:</span>
+                    <div class="mt-1 p-2 bg-gray-900 rounded">${d.properties.content || 'N/A'}</div>
+                </div>
+            `;
+        } else {
+            // Pour les autres types de nœuds, afficher toutes les propriétés
+            Object.entries(d.properties).forEach(([key, value]) => {
+                if (key !== 'id' && key !== 'type' && key !== 'embedding') {
+                    detailsHtml += `<p><span class="font-semibold">${key}:</span> ${value}</p>`;
+                }
+            });
+        }
+    }
+    
+    // Ajouter un bouton pour centrer le graphe sur ce nœud si c'est un ticket
+    if (d.type === 'Ticket' && d.properties && d.properties.ticket_id) {
+        detailsHtml += `
+            <div class="mt-4 text-right">
+                <button onclick="refreshGraphWithTicket('${d.properties.ticket_id}')" 
+                        class="px-3 py-1 bg-orange-brand text-black rounded hover:bg-orange-dark">
+                    Explorer ce ticket
+                </button>
+            </div>
+        `;
+    }
+    
+    nodeDetails.innerHTML = detailsHtml;
+}
+
+// Fonction pour centrer le graphe sur un ticket spécifique
+function refreshGraphWithTicket(ticketId) {
+    document.getElementById('ticketId').value = ticketId;
+    loadGraph();
+}
+
+// Initialiser la visualisation
+function initializeVisualization() {
+    // Nettoyer le conteneur
+    d3.select('#graph-container').html('');
+    
+    // Créer l'élément SVG
+    svg = d3.select('#graph-container')
+        .append('svg')
+        .attr('width', config.width)
+        .attr('height', config.height)
+        .attr('class', 'bg-black');
+    
+    // Ajouter un zoom et pan
+    const zoom = d3.zoom()
+        .scaleExtent([0.1, 4])
+        .on('zoom', (event) => {
+            mainGroup.attr('transform', event.transform);
+        });
+    
+    svg.call(zoom);
+    
+    // Créer un groupe principal pour contenir tous les éléments
+    const mainGroup = svg.append('g')
+        .attr('class', 'main-group');
+    
+    // Ajouter des marqueurs pour les flèches (déplacé dans renderGraph)
+    svg.append('defs');
+    
+    // Créer les groupes pour les liens et les nœuds
+    mainGroup.append('g').attr('class', 'links');
+    mainGroup.append('g').attr('class', 'nodes');
+    
+    // Ajouter un texte de chargement
+    svg.append('text')
+        .attr('class', 'loading-text')
+        .attr('x', config.width / 2)
+        .attr('y', config.height / 2)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#8F8F8F')
+        .text('Chargement du graphe...');
+    
+    // Initialiser la simulation
+    simulation = d3.forceSimulation()
+        .force('link', d3.forceLink().id(d => d.id).distance(150))
+        .force('charge', d3.forceManyBody().strength(-300))
+        .force('center', d3.forceCenter(config.width / 2, config.height / 2))
+        .force('collision', d3.forceCollide().radius(config.nodeRadius * 2))
+        .alphaTarget(0.3)  // Maintient plus longtemps le mouvement
+        .alphaDecay(0.05); // Ralentit le refroidissement
+}
+
+// Fonction pour charger et afficher le graphe
+function loadGraph() {
+    // Récupérer les paramètres
+    const ticketId = document.getElementById('ticketId').value.trim();
+    const depth = document.getElementById('depth').value;
+    
+    // Afficher un message de chargement
+    d3.select('#graph-container').html(`
+        <div class="flex items-center justify-center h-full text-orange-grey">
+            <span>Chargement du graphe de connaissances...</span>
+        </div>
+    `);
+    
+    // Construction de l'URL
+    let url = '/api/kg-data/?depth=' + depth;
+    if (ticketId) {
+        url += '&ticket_id=' + encodeURIComponent(ticketId);
+    }
+    
+    // Cacher la section d'informations du nœud
+    document.getElementById('node-info').classList.add('hidden');
+    
+    // Charger les données
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur lors du chargement des données');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'error') {
+                throw new Error(data.message);
+            }
+            // Initialiser et rendre le graphe
+            initializeVisualization();
+            renderGraph(data);
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            d3.select('#graph-container').html(`
+                <div class="flex flex-col items-center justify-center h-full text-red-500">
+                    <span>Erreur: ${error.message}</span>
+                    <button 
+                        class="mt-4 px-4 py-2 bg-orange-brand text-black rounded hover:bg-orange-dark"
+                        onclick="loadGraph()">
+                        Réessayer
+                    </button>
+                </div>
+            `);
+        });
+}
+
+// Fonction pour afficher le graphe
+function renderGraph(data) {
+    // S'assurer que les données sont structurées correctement
+    if (!data.nodes || !data.links || data.status === 'error') {
+        d3.select('#graph-container').html(`
+            <div class="flex items-center justify-center h-full text-red-500">
+                <span>Erreur de données: ${data.message || 'Structure de données incorrecte'}</span>
+            </div>
+        `);
+        return;
+    }
+    
+    // Créer une copie des liens pour éviter les modifications directes
+    // Transformer les ID en références directes aux objets nœuds pour D3
+    const nodeById = new Map(data.nodes.map(node => [node.id, node]));
+    const links = data.links.map(link => ({
+        id: link.id,
+        source: nodeById.get(link.source) || link.source,
+        target: nodeById.get(link.target) || link.target,
+        type: link.type,
+        properties: link.properties || {}
+    }));
+    
+    // Ajouter les marqueurs de flèches pour les différents types de relations
+    const markerTypes = [...new Set(links.map(link => link.type))];
+    
+    svg.select('defs').selectAll('marker')
+        .data(markerTypes)
+        .enter().append('marker')
+        .attr('id', d => `arrow-${d}`)
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 20)  // Position de la flèche sur la ligne
+        .attr('refY', 0)
+        .attr('markerWidth', 6)
+        .attr('markerHeight', 6)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('fill', d => config.linkColors[d] || '#999')
+        .attr('d', 'M0,-5L10,0L0,5');
+    
+    // Création des liens avec un groupe pour gérer les styles et les événements
+    const linkGroups = svg.select('.links')
+        .selectAll('g')
+        .data(links)
+        .enter()
+        .append('g')
+        .attr('class', 'link-group');
+    
+    // Ajouter la ligne principale pour chaque lien
+    linkElements = linkGroups.append('line')
+        .attr('stroke', d => config.linkColors[d.type] || '#999')
+        .attr('stroke-opacity', 0.6)
+        .attr('stroke-width', 2)
+        .attr('marker-end', d => `url(#arrow-${d.type})`);
+    
+    // Ajouter des titres de relation au survol
+    linkGroups.append('title')
+        .text(d => {
+            // Afficher les propriétés du lien si elles existent
+            if (d.properties && Object.keys(d.properties).length > 0) {
+                return `${d.type}\n${Object.entries(d.properties)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join('\n')}`;
+            }
+            return d.type;
+        });
+    
+    // Création des groupes de nœuds pour gérer les styles et les événements
+    const nodeGroups = svg.select('.nodes')
+        .selectAll('g')
+        .data(data.nodes)
+        .enter()
+        .append('g')
+        .attr('class', 'node-group')
+        .call(d3.drag()
+            .on('start', dragStarted)
+            .on('drag', dragged)
+            .on('end', dragEnded))
+        .on('click', showNodeInfo);  // Afficher les informations du nœud au clic
+    
+    // Ajouter le cercle principal pour chaque nœud
+    nodeElements = nodeGroups.append('circle')
+        .attr('r', config.nodeRadius)
+        .attr('fill', d => config.nodeColors[d.type] || '#999');
+    
+    // Ajouter des labels aux nœuds
+    const labels = nodeGroups.append('text')
+        .attr('dx', 15)
+        .attr('dy', 4)
+        .attr('fill', '#fff')
+        .text(d => d.label || d.id)
+        .each(function(d) {
+            // Limiter la longueur du texte
+            const text = d3.select(this);
+            const textLength = text.node().getComputedTextLength();
+            if (textLength > 100) {
+                text.text(text.text().substring(0, 20) + '...');
+            }
+        });
+    
+    // Ajouter des titres au survol
+    nodeGroups.append('title')
+        .text(d => {
+            // Afficher les propriétés du nœud
+            if (d.properties) {
+                return `${d.type}\n${Object.entries(d.properties)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join('\n')}`;
+            }
+            return d.type;
+        });
+    
+    // Mise à jour de la simulation
+    simulation
+        .nodes(data.nodes)
+        .on('tick', ticked);
+    
+    simulation.force('link')
+        .links(links);
+    
+    // Fonction appelée à chaque tick de la simulation
+    function ticked() {
+        // Mise à jour des positions des liens
+        linkElements
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+        
+        // Mise à jour des positions des nœuds et des groupes
+        nodeGroups
+            .attr('transform', d => `translate(${
+                d.x = Math.max(config.nodeRadius, Math.min(config.width - config.nodeRadius, d.x))
+            },${
+                d.y = Math.max(config.nodeRadius, Math.min(config.height - config.nodeRadius, d.y))
+            })`);
+    }
+}
+
+// Gestionnaire d'événements pour le bouton d'actualisation
+document.getElementById('refreshGraph').addEventListener('click', loadGraph);
+
+// Charger le graphe au chargement de la page
+document.addEventListener('DOMContentLoaded', loadGraph);
+
+// Gérer le redimensionnement de la fenêtre
+window.addEventListener('resize', () => {
+    config.width = document.getElementById('graph-container').clientWidth;
+    config.height = document.getElementById('graph-container').clientHeight;
+    
+    if (svg) {
+        svg.attr('width', config.width).attr('height', config.height);
+        simulation.force('center', d3.forceCenter(config.width / 2, config.height / 2)).restart();
+    }
+});
+</script>
+{% endblock %}
