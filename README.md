@@ -2,9 +2,24 @@
 
 ## About Me
 
-I am a Master's student in Data Science with a passion for machine learning, deep learning, and real-time data processing. This portfolio showcases the projects I completed during my master's program, demonstrating expertise in various domains of data science and artificial intelligence.
+Dynamic Data Scientist with extensive experience implementing cutting-edge solutions, particularly in customer support optimization through machine learning and graph-based technologies. Over two years hands-on experience with GraphRAG at Orange Business and RAG solutions at TW3 Partners. Proven ability to collaborate with international teams. Strong educational foundation in AI and Data Science from prestigious Université Paris Dauphine.
+
+**GenAI Enthusiast** passionate about leveraging Large Language Models and advanced AI architectures to solve complex business challenges. This portfolio showcases my journey from academic excellence to real-world impact through innovative AI solutions.
 
 📄 **[View My CV](assets/monCV_en.pdf)**
+
+## 🚀 Core Expertise
+
+### Generative AI & RAG Systems
+- **2+ Years Production Experience**: Implementing RAG/GraphRAG systems at scale
+- **LLM Integration**: GPT-4, Claude, open-source models for enterprise solutions
+- **Advanced Architectures**: Graph-augmented retrieval, semantic search, knowledge graphs
+- **Real Impact**: 70% reduction in support ticket resolution time at Orange Business
+
+### Professional Experience
+- **Orange Business Services**: GraphRAG system development for IT incident management
+- **TW3 Partners**: RAG solutions for business intelligence and automation
+- **International Collaboration**: Working with distributed teams across multiple time zones
 
 ## Projects Overview
 
@@ -133,10 +148,23 @@ An innovative Graph Retrieval-Augmented Generation (GraphRAG) system that revolu
 - IT Operations & Incident Management
 - Knowledge Graph Construction
 
+## 🎯 Current Focus
+
+As a **GenAI Enthusiast**, I'm particularly interested in:
+- Advanced RAG architectures and optimization
+- Multi-modal AI systems
+- LLM fine-tuning and prompt engineering
+- Knowledge graph integration with LLMs
+- Production deployment of AI systems
+
 ## Contact
 
-Feel free to reach out for collaboration or opportunities in data science and machine learning.
+Feel free to reach out for collaboration or opportunities in:
+- Generative AI implementation
+- RAG/GraphRAG system development
+- Data Science & Machine Learning projects
+- AI consulting and architecture design
 
 ---
 
-*This repository contains the projects completed during my Master's in Data Science program, showcasing practical applications of machine learning, deep learning, and big data technologies.*
+*This portfolio showcases my journey as a GenAI-focused Data Scientist, combining academic excellence from Université Paris Dauphine with real-world experience at Orange Business Services and TW3 Partners. Each project demonstrates my commitment to pushing the boundaries of what's possible with AI.*
